@@ -231,15 +231,3 @@ var QuickPlot = function(canvas){
     
     this.init(canvas);
 }
-
-function x(){
-    var y = new QuickPlot(document.getElementById("canvas"));
-    y.setFunction(function(x){return Math.sin(x)});
-    y.setGraphDomain(-4, 4);
-    y.setGraphRange(-1, 9);
-    return y;
-}
-
-var y = x();
-
-y.drawGraph();
