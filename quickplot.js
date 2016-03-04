@@ -1,20 +1,21 @@
 var QuickPlot = function(canvas){
     //Canvas properties
-    this.canvas = null;
-    this.canvasContext = null;
-    this.canvasWidth = null;
-    this.canvasHeight = null;
+    this.canvas;
+    this.canvasContext;
+    this.canvasWidth;
+    this.canvasHeight;
     
     //Graph properties
-    this.canvasBackgroundColor = null;
-    this.functionColor = null;
-    this.graphDomain = null; //Domain/range from far left to far right of the canvas
-    this.graphRange = null;
+    this.canvasBackgroundColor;
+    this.functionColor;
+    this.graphDomain; //Domain/range from far left to far right of the canvas
+    this.graphRange;
+    this.drawAxis;
     
     //Function properties
-    this.functionLambda = null;
-    this.functionDomain = null; //What domain/range to graph the function on
-    this.functionRange = null;
+    this.functionLambda;
+    this.functionDomain; //What domain/range to graph the function on
+    this.functionRange;
     
     //METHODS-----------------------------------------------------------
     
@@ -26,11 +27,17 @@ var QuickPlot = function(canvas){
         this.canvasHeight = this.canvas.height;
         
         if(redraw){
-            //ADD REDRAW CODE
+            this.drawGraph();
         }
     }
     
     //SETTERS
+    
+    //void setDrawAxis(enabled) enables drawing the axis if passed true.
+    //NOTE: Does not update canvas.
+    this.setDrawAxis = function(enabled){
+        this.drawAxis = enabled;
+    }
     
     //void setBackgroundColor(color) sets the background color for the canvas.
     //Note: Does not update canvas
@@ -52,6 +59,9 @@ var QuickPlot = function(canvas){
     this.setGraphDomain = function(from, to){
         this.graphDomain = {"from": from,
                             "to": to};
+        if(this.functionDomain == undefined){
+            this.functionDomain = this.graphDomain;
+        }
     }
     
     //void setGraphRange(from, to) sets the graph range.
@@ -60,6 +70,9 @@ var QuickPlot = function(canvas){
     this.setGraphRange = function(from, to){
         this.graphRange = {"from": from,
                           "to": to};
+        if(this.functionRange == undefined){
+            this.functionRange = this.graphRange;
+        }
     }
     
     //void setFunction(functionLambda) sets the function to be plotted to functionLambda
@@ -84,6 +97,122 @@ var QuickPlot = function(canvas){
     }
     
     
+    //GETTERS
+    
+    //Boolean getDrawAxis() returns whether or not axis is currently being drawn.
+    this.getDrawAxis = function(){
+        return this.drawAxis;
+    }
+    
+    //Object getBackgroundColor() returns the current canvas background color.
+    this.getBackgroundColor = function(){
+        return this.canvasBackgroundColor;
+    }
+    
+    //Object getFunctionColor() returns the current function color.
+    this.getFunctionColor = function(){
+        return this.functionColor;
+    }
+    
+    //Object getGraphDomain() returns the current graph domain object.
+    this.getGraphDomain = function(){
+        return this.graphDomain;
+    }
+    
+    //Object getGraphRange() returns the current graph range object.
+    this.getGraphRange = function(){
+        return this.graphRange;
+    }
+    
+    //Object getFunctionDomain() returns the current function domain object.
+    this.getFunctionDomain = function(){
+        return this.functionDomain;
+    }
+    
+    //Object getFunctionRange() returns the current function range object.
+    this.getFunctionRange = function(){
+        return this.functionRange;
+    }
+    
+    //Function getFunctionLambda() returns the current function lambda.
+    this.getFunctionLambda = function(){
+        return this.functionLambda;
+    }
+    
+    //boolean drawGraph() draws the graph according to properties set using setters.
+    //NOTE: Returns false and prints an error if draw fails. Otherwise returns true.
+    this.drawGraph = function(){
+        //Check for valid properties
+        var errorFlag = false;
+        if(this.canvas == undefined || this.canvasContext == undefined){
+            errorFlag = true;
+            console.error("QuickPlot Error: Canvas not defined");
+        }
+        if(this.canvasWidth <=0 || this.canvasHeight <= 0){
+            errorFlag = true;
+            console.error("QuickPlot Error: Canvas dimension error.");
+        }
+        if(this.functionLambda == undefined || this.functionLambda == undefined){
+            errorFlag = true;
+            console.error("QuickPlot Error: Function not defined.");
+        }
+        if(this.graphDomain == undefined || this.graphRange == undefined){
+            errorFlag = true;
+            console.error("QuickPlot Error: Graph domain or range not set.");
+        }
+        if(this.graphDomain.to - this.graphDomain.from <= 0){
+            errorFlag = true;
+            console.error("QuickPlot Error: Graph domain error.");
+        }
+        
+        if(errorFlag){
+            return false;
+        }
+        
+        //Properties are valid, we can draw the graph now.
+        //First, draw the background.
+        
+        this.canvasContext.fillStyle = (this.canvasBackgroundColor == undefined) ? "#FFFFFF" : this.canvasBackgroundColor;
+        this.canvasContext.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
+        
+        //Now draw the axis:
+        if(this.drawAxis){
+            var xAxis = (-1 * this.graphDomain.from) * (this.canvasWidth)/(this.graphDomain.to - this.graphDomain.from);
+            var yAxis = (-1 * this.graphRange.from) * (this.canvasHeight)/(this.graphRange.to - this.graphRange.from);
+
+            //Change to black color for axis
+            this.canvasContext.fillStyle = "#000000";
+            this.canvasContext.fillRect(xAxis, 0, 1, this.canvasHeight);
+            this.canvasContext.fillRect(0, (this.canvasHeight - yAxis), this.canvasWidth, 1);
+                                        //We flip the y because y=0 is at the top of the canvas
+        }
+        
+        //Finally, the function
+        this.canvasContext.fillStyle = (this.functionColor == undefined) ? "#AA0000" : this.functionColor;
+        //We cache previous y2 values because they're the same as y1 on the next iteration.
+        var cacheY1 = null;
+        var cacheY1Pixel = null;
+        for(var i = 0; i<=this.canvasWidth; i++){
+            var x = ((i)  * ((this.graphDomain.to - this.graphDomain.from) / this.canvasWidth)) + this.graphDomain.from;
+            
+            if(x < this.functionDomain.from || x > this.functionDomain.to)
+                continue;
+            
+            var y1 = (cacheY1 == null) ? this.functionLambda(x) : cacheY1;
+            var y2 = this.functionLambda(x+((this.graphDomain.to - this.graphDomain.from) / this.canvasWidth));
+            
+            var y1Pixel = (cacheY1Pixel == null) ? ((y1 - this.graphRange.from) * (this.canvasHeight) / (this.graphRange.to - this.graphRange.from)) : cacheY1Pixel;
+            var y2Pixel = ((y2 - this.graphRange.from) * (this.canvasHeight) / (this.graphRange.to - this.graphRange.from));
+            
+            var point = Math.max(y1Pixel, y2Pixel);
+            var height = Math.abs(y1Pixel-y2Pixel)+1;
+            
+            this.canvasContext.fillRect(i, this.canvasHeight - point, 1, height);
+            
+            cacheY1 = y2;
+            cacheY1Pixel = y2Pixel;
+        }
+    }
     
     //Initialization function - gets called on instantiation
     this.init = function(){
@@ -97,7 +226,20 @@ var QuickPlot = function(canvas){
         this.canvasContext = canvas.getContext("2d");
         this.canvasWidth = canvas.width;
         this.canvasHeight = canvas.height;
+        this.drawAxis = true;
     }
     
     this.init(canvas);
 }
+
+function x(){
+    var y = new QuickPlot(document.getElementById("canvas"));
+    y.setFunction(function(x){return Math.sin(x)});
+    y.setGraphDomain(-4, 4);
+    y.setGraphRange(-1, 9);
+    return y;
+}
+
+var y = x();
+
+y.drawGraph();
