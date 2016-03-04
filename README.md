@@ -30,12 +30,14 @@ Now in JavaScript, create a new QuickPlot object and pass it a reference to your
     
 Finally, we set our properties using provided setters. There are 3 required setters we must call. See documentation for setters in the documentation below.
 ```JavaScript
-  quickplot.setFunction(function(x){return Math.sin(x)});
+  quickplot.setFunction(function(x){return Math.pow(x, 2)});
   quickplot.setGraphDomain(-2, 2);
-  quickplot.setGraphRange(0, 3);
+  quickplot.setGraphRange(-1, 3);
 ```
 
 When you want to draw your function plot to the canvas, call `quickplot.drawGraph()`.
+
+![GRAPH](http://i.imgur.com/ylBP8Um.png)
 
 That's it! 
 
