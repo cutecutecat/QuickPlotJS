@@ -1,5 +1,5 @@
 # QuickPlot.js
-A pure JavaScript library that plots math function on an HTML5 canvas. Quick, fast, no bullshit. Use as you please. Used to make [Mathgifs](http://nwoodthorpe.com/mathgif/).
+A pure JavaScript library that plots math functions on an HTML5 canvas. Quick, fast, no bullshit. Use as you please. Used to make [Mathgifs](http://nwoodthorpe.com/mathgif/).
 
 ##Features
 
