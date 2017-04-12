@@ -14,6 +14,8 @@ var QuickPlot = function(canvas){
     this.drawArrow;
     this.partX;
     this.partY;
+    this.labelX;
+    this.labelY;
     
     //Function properties
     this.functionLambda;
@@ -52,6 +54,14 @@ var QuickPlot = function(canvas){
 
     this.setPartY = function (parts) {
         this.partY = parts;
+    }
+
+    this.setLabelX = function (label) {
+        this.labelX = label;
+    }
+
+    this.setLabelY = function (label) {
+        this.labelY = label;
     }
     
     //void setBackgroundColor(color) sets the background color for the canvas.
@@ -130,6 +140,14 @@ var QuickPlot = function(canvas){
     this.getPartY = function () {
         return this.partY;
     }
+
+    this.getLabelX = function () {
+        return this.labelX;
+    }
+
+    this.getLabelY = function () {
+        return this.labelY;
+    }
     
     //Object getBackgroundColor() returns the current canvas background color.
     this.getBackgroundColor = function(){
@@ -204,14 +222,14 @@ var QuickPlot = function(canvas){
         
         //Now draw the axis:
         if(this.drawAxis){
-            var xAxis = Math.floor((-1 * this.graphDomain.from) * (this.canvasWidth)/(this.graphDomain.to - this.graphDomain.from));
-            var yAxis = Math.floor(this.canvasHeight - (-1 * this.graphRange.from) * (this.canvasHeight) / (this.graphRange.to - this.graphRange.from));
+            var xAxis = Math.floor(this.canvasWidth*0.1);
+            var yAxis = Math.floor(this.canvasHeight*0.9);
             var yAxis_flip = this.canvasHeight - yAxis;
 
             //Change to black color for axis
             this.canvasContext.fillStyle = "#000000";
-            this.canvasContext.fillRect(xAxis, 0, 1, this.canvasHeight);
-            this.canvasContext.fillRect(0, yAxis, this.canvasWidth, 1);
+            this.canvasContext.fillRect(xAxis, 0, 1, yAxis);
+            this.canvasContext.fillRect(xAxis, yAxis, this.canvasWidth, 1);
 
                                         //We flip the y because y=0 is at the top of the canvas
         }
@@ -231,26 +249,31 @@ var QuickPlot = function(canvas){
             
             var x_dis = Math.floor((this.canvasWidth - xAxis) * 0.9 / this.partX);
             var y_dis = Math.floor(yAxis * 0.9 / this.partY);
-            var x_neg_part = Math.floor(xAxis / x_dis);
-            var y_neg_part = Math.floor(yAxis_flip / y_dis);
-            var x_step =(this.graphDomain.to - this.graphDomain.from) * 0.9  / (this.partX + x_neg_part);
-            var y_step = (this.graphRange.to - this.graphRange.from) * 0.9 / (this.partY + y_neg_part);
+            var x_step =(this.graphDomain.to - this.graphDomain.from) * 0.9  / this.partX ;
+            var y_step = (this.graphRange.to - this.graphRange.from) * 0.9 / this.partY;
             for (var n = 1; n <= this.partY; n++) {
                 this.canvasContext.fillRect(xAxis, yAxis - y_dis * n, 5, 1);
-                this.canvasContext.fillText((y_step * n).toFixed(2), xAxis - 25, yAxis - y_dis * n + 5);
-            }
-            for (var n = 1; n <= y_neg_part; n++) {
-                this.canvasContext.fillRect(xAxis, yAxis + y_dis * n, 5, 1);
-                this.canvasContext.fillText((-y_step * n).toFixed(2), xAxis - 30, yAxis + y_dis * n + 5);
+                this.canvasContext.textBaseline = "middle";
+                this.canvasContext.textAlign = "end";
+                this.canvasContext.fillText((this.graphRange.from+y_step * n).toFixed(2), xAxis-5, yAxis - y_dis * n);
             }
             for (var n = 1; n <= this.partX; n++) {
                 this.canvasContext.fillRect(xAxis + x_dis * n, yAxis - 5, 1, 5);
-                this.canvasContext.fillText((x_step * n).toFixed(2), xAxis + x_dis * n - 10, yAxis + 15);
+                this.canvasContext.textBaseline = "top";
+                this.canvasContext.textAlign = "center";
+                this.canvasContext.fillText((this.graphDomain.from+x_step * n).toFixed(2), xAxis + x_dis * n , yAxis);
             }
-            for (var n = 1; n <= x_neg_part; n++) {
-                this.canvasContext.fillRect(xAxis - x_dis * n, yAxis - 5, 1, 5);
-                this.canvasContext.fillText((-x_step * n).toFixed(2), xAxis - x_dis * n - 15, yAxis + 15);
-            }
+        }
+        //draw the label
+        if (this.labelX) {
+            this.canvasContext.textBaseline = "top";
+            this.canvasContext.textAlign = "end";
+            this.canvasContext.fillText(this.labelX, this.canvasWidth-20, yAxis+20);
+        }
+        if (this.labelY) {
+            this.canvasContext.textBaseline = "top";
+            this.canvasContext.textAlign = "end";
+            this.canvasContext.fillText(this.labelY, xAxis-10, 15);
         }
         
         //Finally, the function
@@ -258,7 +281,7 @@ var QuickPlot = function(canvas){
         //We cache previous y2 values because they're the same as y1 on the next iteration.
         var cacheY1 = null;
         var cacheY1Pixel = null;
-        for(var i = 0; i<=this.canvasWidth; i++){
+        for(var i = xAxis; i<=this.canvasWidth; i++){
             var x = ((i)  * ((this.graphDomain.to - this.graphDomain.from) / this.canvasWidth)) + this.graphDomain.from;
             
             if(x < this.functionDomain.from || x > this.functionDomain.to)
